@@ -4,11 +4,10 @@ const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const connectDB = require("./config/db");
 
-// Routes
 const authRoutes = require("./routes/auth");
-const eventRoutes = require("./routes/events");
+const eventRoutes = require("./routes/eventRoutes");
 const getawayRoutes = require("./routes/getaways");
-const stayRoutes = require("./routes/stays"); 
+const stayRoutes = require("./routes/stays");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -29,8 +28,6 @@ app.use(
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/events", eventRoutes);
-
-
 app.use("/api/properties/getaways", getawayRoutes);
 app.use("/api/properties/stays", stayRoutes);
 
@@ -38,6 +35,4 @@ app.use("/api/properties/stays", stayRoutes);
 app.get("/", (req, res) => res.send("API is running..."));
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
