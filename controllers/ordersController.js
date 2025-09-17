@@ -51,3 +51,14 @@ exports.getUserOrders = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch orders" });
   }
 };
+
+// GET bookings count (customer)
+exports.getBookingsCount = async (req, res) => {
+  try {
+    const count = await Order.countDocuments({ createdBy: req.user.id, status: 'paid' });
+    res.json({ count });
+  } catch (error) {
+    console.error('Get Bookings Count Error:', error);
+    res.status(500).json({ message: 'Failed to fetch bookings count' });
+  }
+};

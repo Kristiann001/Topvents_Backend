@@ -1,11 +1,10 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const { stkPush, getAccessToken } = require("../controllers/mpesaController");
+const { stkPush, getAccessToken, callback } = require('../controllers/mpesaController');
+const verifyToken = require('../middleware/auth');
 
-// Route to get access token
-router.get("/access-token", getAccessToken);
-
-// Route to initiate STK push
-router.post("/stkpush", stkPush);
+router.get('/access-token', getAccessToken);
+router.post('/stkpush', verifyToken, stkPush);
+router.post('/callback', callback);
 
 module.exports = router;
