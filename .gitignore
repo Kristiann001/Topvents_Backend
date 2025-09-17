@@ -1,1 +1,15 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Environment variables
 .env
+
+# Build output
+dist/
+build/
+
+# Local development
+*.log
+.DS_Store
