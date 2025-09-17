@@ -10,24 +10,22 @@ const router = express.Router();
 router.post("/register", async (req, res) => {
   try {
     const { name, email, password, password2, role } = req.body;
-
     if (!name || !email || !password || !password2 || !role) {
       return res.status(400).json({ message: "All fields are required" });
     }
-
     if (password !== password2) {
       return res.status(400).json({ message: "Passwords do not match" });
     }
 
-    let user = await User.findOne({ email });
-    if (user) {
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
     }
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    user = new User({ name, email, password: hashedPassword, role });
+    const user = new User({ name, email, password: hashedPassword, role });
     await user.save();
 
     const token = jwt.sign(
@@ -36,44 +34,30 @@ router.post("/register", async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    res
-      .cookie("token", token, {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-      })
-      .json({
-        message: "User registered successfully",
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
-      });
+    res.json({
+      message: "User registered successfully",
+      user: { id: user._id, name: user.name, email: user.email, role: user.role },
+      token,
+    });
   } catch (err) {
     console.error("Register error:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
-// LOGIN (no role required in body)
+// LOGIN
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-
     if (!email || !password) {
-      return res
-        .status(400)
-        .json({ message: "Email and password are required" });
+      return res.status(400).json({ message: "Email and password are required" });
     }
 
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: "Invalid credentials" });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return res.status(400).json({ message: "Invalid credentials" });
+    if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
     const token = jwt.sign(
       { id: user._id, role: user.role },
@@ -81,21 +65,11 @@ router.post("/login", async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    res
-      .cookie("token", token, {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-      })
-      .json({
-        message: "Login successful",
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
-      });
+    res.json({
+      message: "Login successful",
+      user: { id: user._id, name: user.name, email: user.email, role: user.role },
+      token,
+    });
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ message: "Server error" });
@@ -104,13 +78,13 @@ router.post("/login", async (req, res) => {
 
 // LOGOUT
 router.post("/logout", (req, res) => {
-  res.clearCookie("token").json({ message: "Logged out successfully" });
+  res.json({ message: "Logged out successfully" });
 });
 
 // GET CURRENT USER
 router.get("/me", auth, async (req, res) => {
   try {
-    const user = await User.findById(req.userId).select("-password");
+    const user = await User.findById(req.user.id).select("-password");
     if (!user) return res.status(404).json({ message: "User not found" });
     res.json(user);
   } catch (err) {
@@ -122,10 +96,9 @@ router.get("/me", auth, async (req, res) => {
 // GET ALL USERS (ADMIN ONLY)
 router.get("/all", auth, async (req, res) => {
   try {
-    if (req.userRole !== "Admin") {
+    if (req.user.role !== "Admin") {
       return res.status(403).json({ message: "Access denied: Admins only" });
     }
-
     const users = await User.find().select("-password");
     res.json(users);
   } catch (err) {

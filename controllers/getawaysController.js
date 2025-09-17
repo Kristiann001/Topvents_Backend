@@ -4,7 +4,7 @@ const Getaway = require("../models/Getaway");
 exports.createGetaway = async (req, res) => {
   try {
     const { title, description, price, image } = req.body;
-    const getaway = new Getaway({ title, description, price, image, createdBy: req.userId });
+    const getaway = new Getaway({ title, description, price, image, createdBy: req.user.id });
     const saved = await getaway.save();
     res.status(201).json(saved);
   } catch (err) {
@@ -42,7 +42,7 @@ exports.updateGetaway = async (req, res) => {
     const getaway = await Getaway.findById(req.params.id);
     if (!getaway) return res.status(404).json({ message: "Getaway not found" });
 
-    if (req.userRole !== "Admin" && getaway.createdBy.toString() !== req.userId)
+    if (req.user.role !== "Admin" && getaway.createdBy.toString() !== req.user.id)
       return res.status(403).json({ message: "Not authorized to update this getaway" });
 
     getaway.title = req.body.title || getaway.title;
@@ -64,7 +64,7 @@ exports.deleteGetaway = async (req, res) => {
     const getaway = await Getaway.findById(req.params.id);
     if (!getaway) return res.status(404).json({ message: "Getaway not found" });
 
-    if (req.userRole !== "Admin" && getaway.createdBy.toString() !== req.userId)
+    if (req.user.role !== "Admin" && getaway.createdBy.toString() !== req.user.id)
       return res.status(403).json({ message: "Not authorized to delete this getaway" });
 
     await getaway.deleteOne();

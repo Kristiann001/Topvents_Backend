@@ -4,7 +4,7 @@ const Stay = require("../models/Stay");
 exports.createStay = async (req, res) => {
   try {
     const { title, description, price, image } = req.body;
-    const stay = new Stay({ title, description, price, image, createdBy: req.userId });
+    const stay = new Stay({ title, description, price, image, createdBy: req.user.id });
     const saved = await stay.save();
     res.status(201).json(saved);
   } catch (err) {
@@ -42,7 +42,7 @@ exports.updateStay = async (req, res) => {
     const stay = await Stay.findById(req.params.id);
     if (!stay) return res.status(404).json({ message: "Stay not found" });
 
-    if (req.userRole !== "Admin" && stay.createdBy.toString() !== req.userId)
+    if (req.user.role !== "Admin" && stay.createdBy.toString() !== req.user.id)
       return res.status(403).json({ message: "Not authorized to update this stay" });
 
     stay.title = req.body.title || stay.title;
@@ -64,7 +64,7 @@ exports.deleteStay = async (req, res) => {
     const stay = await Stay.findById(req.params.id);
     if (!stay) return res.status(404).json({ message: "Stay not found" });
 
-    if (req.userRole !== "Admin" && stay.createdBy.toString() !== req.userId)
+    if (req.user.role !== "Admin" && stay.createdBy.toString() !== req.user.id)
       return res.status(403).json({ message: "Not authorized to delete this stay" });
 
     await stay.deleteOne();

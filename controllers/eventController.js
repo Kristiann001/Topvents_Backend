@@ -3,14 +3,14 @@ const Event = require("../models/Event");
 // CREATE
 exports.createEvent = async (req, res) => {
   try {
-    const { title, description, date, location } = req.body;
+    const { title, description, price, image } = req.body;
 
     const event = new Event({
       title,
       description,
-      date,
-      location,
-      createdBy: req.userId,
+      price,
+      image,
+      createdBy: req.user.id,
     });
 
     const saved = await event.save();
@@ -50,14 +50,14 @@ exports.updateEvent = async (req, res) => {
     const event = await Event.findById(req.params.id);
     if (!event) return res.status(404).json({ message: "Event not found" });
 
-    if (req.userRole !== "Admin" && event.createdBy.toString() !== req.userId) {
+    if (req.user.role !== "Admin" && event.createdBy.toString() !== req.user.id) {
       return res.status(403).json({ message: "Not authorized to update this event" });
     }
 
     event.title = req.body.title || event.title;
     event.description = req.body.description || event.description;
-    event.date = req.body.date || event.date;
-    event.location = req.body.location || event.location;
+    event.price = req.body.price || event.price;
+    event.image = req.body.image || event.image;
 
     const updated = await event.save();
     res.json(updated);
@@ -73,7 +73,7 @@ exports.deleteEvent = async (req, res) => {
     const event = await Event.findById(req.params.id);
     if (!event) return res.status(404).json({ message: "Event not found" });
 
-    if (req.userRole !== "Admin" && event.createdBy.toString() !== req.userId) {
+    if (req.user.role !== "Admin" && event.createdBy.toString() !== req.user.id) {
       return res.status(403).json({ message: "Not authorized to delete this event" });
     }
 
