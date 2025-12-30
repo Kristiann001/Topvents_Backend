@@ -24,7 +24,17 @@ exports.createEvent = async (req, res) => {
 // READ ALL
 exports.getEvents = async (req, res) => {
   try {
-    const events = await Event.find().populate("createdBy", "name email role");
+    const { search } = req.query;
+    const query = search
+      ? {
+          $or: [
+            { title: { $regex: search, $options: "i" } },
+            { description: { $regex: search, $options: "i" } },
+          ],
+        }
+      : {};
+
+    const events = await Event.find(query).populate("createdBy", "name email role");
     res.json(events);
   } catch (err) {
     console.error("Get Events Error:", err);

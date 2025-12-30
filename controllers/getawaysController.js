@@ -16,7 +16,17 @@ exports.createGetaway = async (req, res) => {
 // READ ALL
 exports.getGetaways = async (req, res) => {
   try {
-    const getaways = await Getaway.find().populate("createdBy", "name email role");
+    const { search } = req.query;
+    const query = search
+      ? {
+          $or: [
+            { title: { $regex: search, $options: "i" } },
+            { description: { $regex: search, $options: "i" } },
+          ],
+        }
+      : {};
+
+    const getaways = await Getaway.find(query).populate("createdBy", "name email role");
     res.json(getaways);
   } catch (err) {
     console.error("Get Getaways Error:", err);

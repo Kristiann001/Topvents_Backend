@@ -16,7 +16,17 @@ exports.createStay = async (req, res) => {
 // READ ALL
 exports.getStays = async (req, res) => {
   try {
-    const stays = await Stay.find().populate("createdBy", "name email role");
+    const { search } = req.query;
+    const query = search
+      ? {
+          $or: [
+            { title: { $regex: search, $options: "i" } },
+            { description: { $regex: search, $options: "i" } },
+          ],
+        }
+      : {};
+
+    const stays = await Stay.find(query).populate("createdBy", "name email role");
     res.json(stays);
   } catch (err) {
     console.error("Get Stays Error:", err);

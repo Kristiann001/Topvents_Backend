@@ -93,6 +93,41 @@ router.get("/me", auth, async (req, res) => {
   }
 });
 
+// UPDATE USER PROFILE
+router.put("/update", auth, async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    const user = await User.findById(req.user.id);
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (name) user.name = name;
+    if (email) {
+      // Check if email is taken by another user
+      const emailExists = await User.findOne({ email });
+      if (emailExists && emailExists._id.toString() !== req.user.id) {
+        return res.status(400).json({ message: "Email already in use" });
+      }
+      user.email = email;
+    }
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(password, salt);
+    }
+
+    await user.save();
+    
+    // Return updated user info (excluding password)
+    res.json({
+      message: "Profile updated successfully",
+      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+    });
+  } catch (err) {
+    console.error("Update profile error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // GET ALL USERS (ADMIN ONLY)
 router.get("/all", auth, async (req, res) => {
   try {
